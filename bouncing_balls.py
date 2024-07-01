@@ -7,7 +7,7 @@ pygame.init()
 
 # Set up the display
 width, height = 800, 600
-screen = pygame.display.set_mode((width, height))
+screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 pygame.display.set_caption("Bouncing Balls Simulation with Gravity")
 
 # Colors
@@ -15,15 +15,15 @@ BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
 # Gravity
-GRAVITY = 0.5
+GRAVITY = 0.0005  # Reduced gravity for relative coordinates
 
 class Ball:
     def __init__(self, x, y, radius):
         self.x = x
         self.y = y
         self.radius = radius
-        self.dx = random.uniform(-5, 5)
-        self.dy = random.uniform(-5, 5)
+        self.dx = random.uniform(-0.005, 0.005)
+        self.dy = random.uniform(-0.005, 0.005)
         self.color = (random.randint(50, 255), random.randint(50, 255), random.randint(50, 255))
 
     def move(self):
@@ -32,14 +32,17 @@ class Ball:
         self.dy += GRAVITY  # Apply gravity
 
         # Bounce off walls
-        if self.x - self.radius <= 0 or self.x + self.radius >= width:
+        if self.x - self.radius <= 0 or self.x + self.radius >= 1:
             self.dx *= -1
-        if self.y - self.radius <= 0 or self.y + self.radius >= height:
+        if self.y - self.radius <= 0 or self.y + self.radius >= 1:
             self.dy *= -0.9  # Reduce velocity on floor bounce
-            self.y = max(self.radius, min(height - self.radius, self.y))  # Ensure ball stays within bounds
+            self.y = max(self.radius, min(1 - self.radius, self.y))  # Ensure ball stays within bounds
 
     def draw(self, screen):
-        pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)
+        screen_x = int(self.x * width)
+        screen_y = int(self.y * height)
+        screen_radius = int(self.radius * min(width, height))
+        pygame.draw.circle(screen, self.color, (screen_x, screen_y), screen_radius)
 
 def check_collision(ball1, ball2):
     dx = ball1.x - ball2.x
@@ -65,24 +68,28 @@ def check_collision(ball1, ball2):
 
         # Move balls apart to prevent sticking
         overlap = (ball1.radius + ball2.radius - distance) / 2
-        ball1.x += overlap * cos
-        ball1.y += overlap * sin
-        ball2.x -= overlap * cos
-        ball2.y -= overlap * sin
+        ball1.x += overlap * cos / width
+        ball1.y += overlap * sin / height
+        ball2.x -= overlap * cos / width
+        ball2.y -= overlap * sin / height
 
 def main():
+    global width, height, screen
     clock = pygame.time.Clock()
-    balls = [Ball(random.randint(50, width-50), height - 50, random.randint(10, 30)) for _ in range(10)]
+    balls = [Ball(random.uniform(0.1, 0.9), random.uniform(0.1, 0.9), random.uniform(0.02, 0.05)) for _ in range(10)]
     
     # Give initial upward velocity
     for ball in balls:
-        ball.dy = random.uniform(-15, -10)
+        ball.dy = random.uniform(-0.015, -0.01)
 
     running = True
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            elif event.type == pygame.VIDEORESIZE:
+                width, height = event.size
+                screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 
         screen.fill(BLACK)
 
