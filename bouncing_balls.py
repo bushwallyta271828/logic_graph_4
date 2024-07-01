@@ -8,11 +8,14 @@ pygame.init()
 # Set up the display
 width, height = 800, 600
 screen = pygame.display.set_mode((width, height))
-pygame.display.set_caption("Bouncing Balls Simulation")
+pygame.display.set_caption("Bouncing Balls Simulation with Gravity")
 
 # Colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
+
+# Gravity
+GRAVITY = 0.5
 
 class Ball:
     def __init__(self, x, y, radius):
@@ -26,12 +29,14 @@ class Ball:
     def move(self):
         self.x += self.dx
         self.y += self.dy
+        self.dy += GRAVITY  # Apply gravity
 
         # Bounce off walls
         if self.x - self.radius <= 0 or self.x + self.radius >= width:
             self.dx *= -1
         if self.y - self.radius <= 0 or self.y + self.radius >= height:
-            self.dy *= -1
+            self.dy *= -0.9  # Reduce velocity on floor bounce
+            self.y = max(self.radius, min(height - self.radius, self.y))  # Ensure ball stays within bounds
 
     def draw(self, screen):
         pygame.draw.circle(screen, self.color, (int(self.x), int(self.y)), self.radius)
@@ -67,7 +72,11 @@ def check_collision(ball1, ball2):
 
 def main():
     clock = pygame.time.Clock()
-    balls = [Ball(random.randint(50, width-50), random.randint(50, height-50), random.randint(10, 30)) for _ in range(10)]
+    balls = [Ball(random.randint(50, width-50), height - 50, random.randint(10, 30)) for _ in range(10)]
+    
+    # Give initial upward velocity
+    for ball in balls:
+        ball.dy = random.uniform(-15, -10)
 
     running = True
     while running:
